@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "551925771354",
+    "project_id": "lilac-task-a5abc",
+    "storage_bucket": "lilac-task-a5abc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:551925771354:android:cd84bb02e6fdf94d54fc63",
+        "android_client_info": {
+          "package_name": "com.example.lilac_task"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1sFrV4rIEXCIQuBsjvOsOBvk1cSlKRy8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
