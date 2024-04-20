@@ -1,10 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:lilac_task/core/constant/theme_bool/bloc/theme_bool_bloc.dart';
 import 'package:lilac_task/core/constant/video_index/bloc/video_index_bloc.dart';
+import 'package:lilac_task/core/utils/secure.dart';
 import 'package:lilac_task/features/home/presentation/bloc/home_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/utils/show_snackbar.dart';
@@ -17,7 +18,7 @@ import 'init_dependencies.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FlutterDownloader.initialize();
+  await securescreen();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -50,6 +51,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.initState();
+  }
 
   // This widget is the root of your application.
   @override
