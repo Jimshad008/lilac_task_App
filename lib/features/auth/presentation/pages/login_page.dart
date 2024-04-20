@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:telephony/telephony.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/common/loader.dart';
@@ -24,6 +25,7 @@ class _LoginPageState extends State<LoginPage> {
       throw 'Could not launch $url';
     }
   }
+  final Telephony telephony = Telephony.instance;
   final TextEditingController phoneNo=TextEditingController();
   @override
   void dispose() {
@@ -37,7 +39,6 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       
 
-backgroundColor: Colors.black,
       body: SafeArea(
         child: BlocConsumer<AuthBloc,AuthState>(builder: (context, state) {
           if(state is AuthLoading){
@@ -199,6 +200,7 @@ backgroundColor: Colors.black,
             showSnackBar(context, state.message);
           } else if (state is AuthSuccess) {
             showSnackBar(context, "Otp sent to your phone number");
+            telephony.requestSmsPermissions;
 
 
           }

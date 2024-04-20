@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lilac_task/features/auth/presentation/pages/profile.dart';
+
 import 'package:pinput/pinput.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:telephony/telephony.dart';
+
 import '../../../../core/common/loader.dart';
 import '../../../../core/utils/show_snackbar.dart';
-import '../../../home/home_page.dart';
+
 import '../bloc/auth_bloc.dart';
 import 'login_page.dart';
 
@@ -28,6 +31,8 @@ class _VerifyOtpPageState extends State<VerifyOtpPage> {
     String secondsStr = (remainingSeconds < 10) ? '0$remainingSeconds' : '$remainingSeconds';
     return '$minutesStr:$secondsStr';
   }
+
+
   int _secondsRemaining = 120;
   late Timer _timer;
   void startTimer() {
@@ -41,22 +46,40 @@ class _VerifyOtpPageState extends State<VerifyOtpPage> {
       });
     });
   }
+  void listenToIncomingSMS(){
+    telephony.listenIncomingSms(onNewMessage: (message) {
+      if(message.body!.contains('lilac-task-a5abc')){
+        otpController.text=message.body!.substring(0,6);
+        if(otpController.text.trim().length==6){
+          context.read<AuthBloc>().add(AuthOtpVerify(otp: otpController.text.trim(), verificationId: widget.verificationId));
+        }
+      }
+    },
+        listenInBackground: false
+        );
+    }
+  final Telephony telephony = Telephony.instance;
   TextEditingController otpController = TextEditingController();
   @override
   void dispose() {
   otpController.dispose();
+  _timer.cancel();
     super.dispose();
   }
 @override
   void initState() {
-  Future.delayed(const Duration(minutes: 4,seconds: 1)).then((value) {
-    showSnackBar(context, "Session Expired");
-    Navigator.pushAndRemoveUntil(context, CupertinoPageRoute(builder: (context) => const LoginPage(),), (route) => false);
-  });
-  Future.delayed(const Duration(minutes: 2,seconds: 1)).then((value) {
-    showSnackBar(context, "Otp is Resend to your Mobile Number");
-    context.read<AuthBloc>().add(AuthLogin(phoneNo: widget.phoneNo, context: context));
-  });
+listenToIncomingSMS();
+  if(mounted){
+    Future.delayed(const Duration(minutes: 4,seconds: 1)).whenComplete(() {
+      showSnackBar(context, "Session Expired");
+      Navigator.pushAndRemoveUntil(context, CupertinoPageRoute(builder: (context) => const LoginPage(),), (route) => false);
+    });
+    Future.delayed(const Duration(minutes: 2,seconds: 1)).whenComplete(() {
+      showSnackBar(context, "Otp is Resend to your Mobile Number");
+      context.read<AuthBloc>().add(AuthLogin(phoneNo: widget.phoneNo, context: context));
+    });
+  }
+
     startTimer();
     super.initState();
   }
@@ -66,7 +89,7 @@ class _VerifyOtpPageState extends State<VerifyOtpPage> {
     var width=MediaQuery.of(context).size.width;
     var height=MediaQuery.of(context).size.height;
     return Scaffold(
-      backgroundColor: Colors.black,
+
       body:
       SafeArea(
         child: Container(
@@ -233,11 +256,10 @@ class _VerifyOtpPageState extends State<VerifyOtpPage> {
                   showSnackBar(context, "Otp is Resend to your Phone Number");
                 }
                 else{
-                 final SharedPreferences local=await SharedPreferences.getInstance();
-                 local.setString("uid", state.success);
+
 
                   showSnackBar(context, "Otp Verification Successful");
-                  Navigator.pushAndRemoveUntil(context, CupertinoPageRoute(builder: (context) =>const HomePage() ,), (route) => false);
+                  Navigator.pushAndRemoveUntil(context, CupertinoPageRoute(builder: (context) =>ProfilePage(phoneNo: widget.phoneNo, authId: state.success) ,), (route) => false);
                 }
 
 

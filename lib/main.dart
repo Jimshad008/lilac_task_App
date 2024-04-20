@@ -2,17 +2,22 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:lilac_task/core/constant/theme_bool/bloc/theme_bool_bloc.dart';
+import 'package:lilac_task/core/constant/video_index/bloc/video_index_bloc.dart';
+import 'package:lilac_task/features/home/presentation/bloc/home_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'core/utils/show_snackbar.dart';
 import 'core/utils/theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/pages/login_page.dart';
-import 'features/home/home_page.dart';
+import 'features/home/presentation/pages/home_page.dart';
 import 'firebase_options.dart';
 import 'init_dependencies.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FlutterDownloader.initialize();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -23,6 +28,15 @@ Future<void> main() async {
     BlocProvider(
       create: (_) => serviceLocator<AuthBloc>(),
     ),
+    BlocProvider(
+      create: (_) => serviceLocator<ThemeBoolBloc>(),
+    ),
+    BlocProvider(
+      create: (_) => serviceLocator<HomeBloc>(),
+    ),
+    BlocProvider(
+      create: (_) => serviceLocator<VideoIndexBloc>(),
+    )
   ],
   child: const MyApp()));
 }
@@ -36,21 +50,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-   final ThemeMode _themeMode = ThemeMode.system;
+
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Lilac Task App',
-      theme:  _themeMode == ThemeMode.system
-    ? lightTheme
-        : _themeMode == ThemeMode.light
-        ? lightTheme
-        : darkTheme,
-        darkTheme: darkTheme,
-      home: const MyHomePage(),
-    );
+  Widget build(BuildContext context){
+
+    return BlocBuilder<ThemeBoolBloc,bool>(builder: (context, state) {
+     return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Lilac Task App',
+        theme:  state?lightTheme:darkTheme,
+        // darkTheme: darkTheme,
+        home: const MyHomePage(),
+      );
+    },);
+
   }
 }
 
@@ -65,11 +79,14 @@ class _MyHomePageState extends State<MyHomePage> {
   keepLogin() async {
     final SharedPreferences local=await SharedPreferences.getInstance();
     String? userId=local.getString("uid");
+    context.read<ThemeBoolBloc>().add(ThemeBoolChange(theme: local.getBool("theme")!));
+
+
     if(userId==null){
       Navigator.pushAndRemoveUntil(context, CupertinoPageRoute(builder: (context) => const LoginPage(),), (route) => false);
     }
     else{
-      Navigator.pushAndRemoveUntil(context, CupertinoPageRoute(builder: (context) => const HomePage(),), (route) => false);
+      context.read<AuthBloc>().add(AuthGetUser(authId: userId));
     }
   }
   addData(){
@@ -86,7 +103,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(child: Image.asset("assets/lilacLogo.png")),
+      body: BlocConsumer<AuthBloc,AuthState>(builder: (context, state) {
+      return  Center(child: Image.asset("assets/lilacLogo.png"));
+      }, listener: (context, state) {
+        if (state is AuthFailure) {
+          showSnackBar(context, state.message.toString());
+        } else if (state is AuthSuccess2) {
+          Navigator.pushAndRemoveUntil(context, CupertinoPageRoute(builder: (context) =>HomePage(user: state.user) ,), (route) => false);
+        }
+      },)
+
     );
   }
 }
