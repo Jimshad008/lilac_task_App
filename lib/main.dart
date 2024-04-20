@@ -88,7 +88,8 @@ class _MyHomePageState extends State<MyHomePage> {
   keepLogin() async {
     final SharedPreferences local=await SharedPreferences.getInstance();
     String? userId=local.getString("uid");
-    context.read<ThemeBoolBloc>().add(ThemeBoolChange(theme: local.getBool("theme")!));
+    bool? t=local.getBool("theme");
+    context.read<ThemeBoolBloc>().add(ThemeBoolChange(theme:t??false));
 
 
     if(userId==null){
